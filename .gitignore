@@ -74,3 +74,8 @@ gradle-app.setting
 
 # Cache of project
 .gradletasknamecache
+
+#intellij
+.idea
+*.iml
+.DS_Store
