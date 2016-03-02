@@ -13,7 +13,6 @@ import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ShareCompat;
-import android.support.v7.graphics.Palette;
 import android.support.v7.widget.Toolbar;
 import android.text.Html;
 import android.text.format.DateUtils;
@@ -90,20 +89,6 @@ public class ArticleDetailFragment extends Fragment implements
         return fragment;
     }
 
-    static float progress(float v, float min, float max) {
-        return constrain((v - min) / (max - min), 0, 1);
-    }
-
-    static float constrain(float val, float min, float max) {
-        if (val < min) {
-            return min;
-        } else if (val > max) {
-            return max;
-        } else {
-            return val;
-        }
-    }
-
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -113,8 +98,6 @@ public class ArticleDetailFragment extends Fragment implements
         }
 
         mIsCard = getResources().getBoolean(R.bool.detail_is_card);
-        mStatusBarFullOpacityBottom = getResources().getDimensionPixelSize(
-            R.dimen.detail_card_top_margin);
         setHasOptionsMenu(true);
     }
 
@@ -176,11 +159,10 @@ public class ArticleDetailFragment extends Fragment implements
                         Bitmap bitmap = imageContainer.getBitmap();
                         if (bitmap != null) {
                             //todo use palette
-                            Palette p = Palette.generate(bitmap, 12);
+//                            Palette p = Palette.generate(bitmap, 12);
                             if (photo != null) {
-                                photo.setImageBitmap(imageContainer.getBitmap());
-                                drawInsetsFrameLayout.dispatchDependentViewsChanged(photo);
-
+                                photo.setImageBitmap(bitmap);
+                                photo.setScaleType(ImageView.ScaleType.CENTER_CROP);
                             }
                         }
                     }
