@@ -51,8 +51,6 @@ public class ArticleDetailFragment extends Fragment implements
     CollapsingToolbarLayout collapsing;
     @Bind(R.id.appbar)
     AppBarLayout appbar;
-    @Bind(R.id.article_title)
-    TextView articleTitle;
     @Bind(R.id.article_byline)
     TextView articleByline;
     @Bind(R.id.article_body)
@@ -139,16 +137,19 @@ public class ArticleDetailFragment extends Fragment implements
             return;
         }
 //        getActivity().setActionBar(appbar);
+
         if (mCursor != null) {
+            String title = mCursor.getString(ArticleLoader.Query.TITLE);
+//            collapsing.setTitle(title);
+            toolbar.setTitle(title);
 //            articleByline.setMovementMethod(new LinkMovementMethod());
             mRootView.setVisibility(View.VISIBLE);
-            articleTitle.setText(mCursor.getString(ArticleLoader.Query.TITLE));
             articleByline.setText(Html.fromHtml(
                 DateUtils.getRelativeTimeSpanString(
                     mCursor.getLong(ArticleLoader.Query.PUBLISHED_DATE),
                     System.currentTimeMillis(), DateUtils.HOUR_IN_MILLIS,
                     DateUtils.FORMAT_ABBREV_ALL).toString()
-                    + " by <font color='#ffffff'>"
+                    + " by <font>"
                     + mCursor.getString(ArticleLoader.Query.AUTHOR)
                     + "</font>"));
             articleBody.setText(Html.fromHtml(mCursor.getString(ArticleLoader.Query.BODY)));
@@ -174,7 +175,6 @@ public class ArticleDetailFragment extends Fragment implements
                 });
         } else {
             mRootView.setVisibility(View.GONE);
-            articleTitle.setText("N/A");
             articleByline.setText("N/A");
             articleBody.setText("N/A");
         }

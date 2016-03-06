@@ -27,4 +27,20 @@
         <!--<item name="android:statusBarColor">@android:color/transparent</item>-->
     </style>
 
+    <style name="CollapsingBarTitle">
+        <item name="android:textColor">@android:color/white</item>
+    </style>
+
+    <style name="CollapsingBarTitle.Collapsed" parent="CollapsingBarTitle">
+        <item name="android:textSize">14sp</item>
+    </style>
+
+    <style name="CollapsingBarTitle.Expanded" parent="CollapsingBarTitle">
+        <item name="android:textSize">24sp</item>
+        <item name="android:maxLines">4</item>
+        <item name="android:singleLine">false</item>
+        <item name="android:ellipsize">none</item>
+        <item name="android:layout_marginBottom">4dp</item>
+    </style>
+
 </resources>
