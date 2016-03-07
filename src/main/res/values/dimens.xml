@@ -8,5 +8,6 @@
     <dimen name="fab_press_translation_z">6dp</dimen>
     <dimen name="fab_margin">16dp</dimen>
     <dimen name="layout_left_right_margin">16dp</dimen>
+    <dimen name="appbar_elevation">4dp</dimen>
 
 </resources>

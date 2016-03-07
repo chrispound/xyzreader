@@ -7,6 +7,7 @@ import android.content.Loader;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.drawable.ColorDrawable;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.CollapsingToolbarLayout;
@@ -20,6 +21,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -70,6 +72,8 @@ public class ArticleDetailFragment extends Fragment implements
 
     private boolean mIsCard = false;
     private int mStatusBarFullOpacityBottom;
+    private long mStartId;
+    private int mPosition;
 
 
     /**
@@ -79,9 +83,11 @@ public class ArticleDetailFragment extends Fragment implements
     public ArticleDetailFragment() {
     }
 
-    public static ArticleDetailFragment newInstance(long itemId) {
+    public static ArticleDetailFragment newInstance(long itemId, long startId, int position) {
         Bundle arguments = new Bundle();
         arguments.putLong(ARG_ITEM_ID, itemId);
+        arguments.putLong(Extras.STARTING_DETAIL_POSITION, startId);
+        arguments.putInt(Extras.CURRENT_DETAIL_POSITION, position);
         ArticleDetailFragment fragment = new ArticleDetailFragment();
         fragment.setArguments(arguments);
         return fragment;
@@ -93,6 +99,8 @@ public class ArticleDetailFragment extends Fragment implements
 
         if (getArguments().containsKey(ARG_ITEM_ID)) {
             mItemId = getArguments().getLong(ARG_ITEM_ID);
+            mStartId = getArguments().getLong(Extras.STARTING_DETAIL_POSITION);
+            mPosition = getArguments().getInt(Extras.CURRENT_DETAIL_POSITION);
         }
 
         mIsCard = getResources().getBoolean(R.bool.detail_is_card);
@@ -136,14 +144,15 @@ public class ArticleDetailFragment extends Fragment implements
         if (mRootView == null) {
             return;
         }
-//        getActivity().setActionBar(appbar);
 
         if (mCursor != null) {
             String title = mCursor.getString(ArticleLoader.Query.TITLE);
-//            collapsing.setTitle(title);
             toolbar.setTitle(title);
-//            articleByline.setMovementMethod(new LinkMovementMethod());
             mRootView.setVisibility(View.VISIBLE);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                String transition = "transition" + mPosition;
+                photo.setTransitionName(transition);
+            }
             articleByline.setText(Html.fromHtml(
                 DateUtils.getRelativeTimeSpanString(
                     mCursor.getLong(ArticleLoader.Query.PUBLISHED_DATE),
@@ -162,6 +171,7 @@ public class ArticleDetailFragment extends Fragment implements
                             //todo use palette
 //                            Palette p = Palette.generate(bitmap, 12);
                             if (photo != null) {
+                                startPostponedEnterTransition();
                                 photo.setImageBitmap(bitmap);
                                 photo.setScaleType(ImageView.ScaleType.CENTER_CROP);
                             }
@@ -170,7 +180,7 @@ public class ArticleDetailFragment extends Fragment implements
 
                     @Override
                     public void onErrorResponse(VolleyError volleyError) {
-
+                        startPostponedEnterTransition();
                     }
                 });
         } else {
@@ -214,5 +224,27 @@ public class ArticleDetailFragment extends Fragment implements
     public void onDestroyView() {
         super.onDestroyView();
         ButterKnife.unbind(this);
+    }
+
+    /**
+     * if this is the entered view then start the transition after the photo is loaded.
+     */
+    private void startPostponedEnterTransition() {
+        if (mStartId == mItemId) {
+            photo.getViewTreeObserver().addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
+                @Override
+                public boolean onPreDraw() {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                        photo.getViewTreeObserver().removeOnPreDrawListener(this);
+                        getActivity().startPostponedEnterTransition();
+                    }
+                    return true;
+                }
+            });
+        }
+    }
+
+    public ImageView getHeaderImage() {
+        return photo;
     }
 }

@@ -31,8 +31,10 @@
         <item name="android:textColor">@android:color/white</item>
     </style>
 
-    <style name="CollapsingBarTitle.Collapsed" parent="CollapsingBarTitle">
-        <item name="android:textSize">14sp</item>
+    <style name="CollapsingBarTitle.Collapsed" parent="TextAppearance.Widget.AppCompat.Toolbar.Title">
+        <item name="android:textSize">18sp</item>
+        <item name="android:textColor">@android:color/white</item>
+
     </style>
 
     <style name="CollapsingBarTitle.Expanded" parent="CollapsingBarTitle">

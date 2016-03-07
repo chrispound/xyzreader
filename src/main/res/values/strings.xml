@@ -10,4 +10,5 @@
     <string name="up">Up</string>
     <string name="article_header">article_header</string>
 
+    <string name="image_activity_transition">ImageSharedTransition</string>
 </resources>
