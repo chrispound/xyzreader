@@ -37,7 +37,7 @@ import java.util.Map;
  * activity presents a grid of items as cards.
  */
 public class ArticleListActivity extends AppCompatActivity implements
-        LoaderManager.LoaderCallbacks<Cursor> {
+    LoaderManager.LoaderCallbacks<Cursor> {
 
     private Toolbar mToolbar;
     private SwipeRefreshLayout mSwipeRefreshLayout;
@@ -54,6 +54,9 @@ public class ArticleListActivity extends AppCompatActivity implements
             }
         }
     };
+    private int currentPosition;
+    private Adapter adapter;
+    private DynamicHeightNetworkImageView mResetSharedElementView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -66,12 +69,14 @@ public class ArticleListActivity extends AppCompatActivity implements
                     if (mTmpReenterState != null) {
                         int startingPosition = mTmpReenterState.getInt(Extras.STARTING_DETAIL_POSITION);
                         int currentPosition = mTmpReenterState.getInt(Extras.CURRENT_DETAIL_POSITION);
+                        String transition = "transition" + currentPosition;
+                        View newSharedElement = mRecyclerView.findViewWithTag(transition);
+                        //the device rotated.
                         if (startingPosition != currentPosition) {
                             // If startingPosition != currentPosition the user must have swiped to a
                             // different page in the DetailsActivity. We must update the shared element
                             // so that the correct one falls into place.
-                            String transition = "transition" + currentPosition;
-                            View newSharedElement = mRecyclerView.findViewWithTag(transition);
+                            newSharedElement = mRecyclerView.findViewWithTag(transition);
                             if (newSharedElement != null) {
                                 names.clear();
                                 names.add(transition);
@@ -128,18 +133,23 @@ public class ArticleListActivity extends AppCompatActivity implements
         super.onActivityReenter(requestCode, data);
         mTmpReenterState = new Bundle(data.getExtras());
         int startingPosition = mTmpReenterState.getInt(Extras.STARTING_DETAIL_POSITION);
-        int currentPosition = mTmpReenterState.getInt(Extras.CURRENT_DETAIL_POSITION);
+        currentPosition = mTmpReenterState.getInt(Extras.CURRENT_DETAIL_POSITION);
         if (startingPosition != currentPosition) {
             mRecyclerView.scrollToPosition(currentPosition);
         }
-        postponeEnterTransition();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            postponeEnterTransition();
+        }
         mRecyclerView.getViewTreeObserver().addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
             @Override
             public boolean onPreDraw() {
                 mRecyclerView.getViewTreeObserver().removeOnPreDrawListener(this);
                 // TODO: figure out why it is necessary to request layout here in order to get a smooth transition.
                 mRecyclerView.requestLayout();
-                startPostponedEnterTransition();
+                //if view not found there was a rotation or the recyclerview has not finished loading
+                if (mRecyclerView.findViewWithTag("transition" + currentPosition) != null) {
+                    startPostponedEnterTransition();
+                }
                 return true;
             }
         });
@@ -169,12 +179,12 @@ public class ArticleListActivity extends AppCompatActivity implements
 
     @Override
     public void onLoadFinished(Loader<Cursor> cursorLoader, Cursor cursor) {
-        Adapter adapter = new Adapter(cursor);
+        adapter = new Adapter(cursor);
         adapter.setHasStableIds(true);
         mRecyclerView.setAdapter(adapter);
         int columnCount = getResources().getInteger(R.integer.list_column_count);
         StaggeredGridLayoutManager sglm =
-                new StaggeredGridLayoutManager(columnCount, StaggeredGridLayoutManager.VERTICAL);
+            new StaggeredGridLayoutManager(columnCount, StaggeredGridLayoutManager.VERTICAL);
         mRecyclerView.setLayoutManager(sglm);
     }
 
@@ -210,6 +220,15 @@ public class ArticleListActivity extends AppCompatActivity implements
         }
 
         @Override
+        public void onViewAttachedToWindow(ViewHolder holder) {
+            super.onViewAttachedToWindow(holder);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                if (("transition" + currentPosition).equals(holder.thumbnailView.getTag()))
+                    startPostponedEnterTransition();
+            }
+        }
+
+        @Override
         public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
             View view = getLayoutInflater().inflate(R.layout.list_item_article, parent, false);
             final ViewHolder vh = new ViewHolder(view);
@@ -237,15 +256,15 @@ public class ArticleListActivity extends AppCompatActivity implements
             mCursor.moveToPosition(position);
             holder.titleView.setText(mCursor.getString(ArticleLoader.Query.TITLE));
             holder.subtitleView.setText(
-                    DateUtils.getRelativeTimeSpanString(
-                            mCursor.getLong(ArticleLoader.Query.PUBLISHED_DATE),
-                            System.currentTimeMillis(), DateUtils.HOUR_IN_MILLIS,
-                            DateUtils.FORMAT_ABBREV_ALL).toString()
-                            + " by "
-                            + mCursor.getString(ArticleLoader.Query.AUTHOR));
+                DateUtils.getRelativeTimeSpanString(
+                    mCursor.getLong(ArticleLoader.Query.PUBLISHED_DATE),
+                    System.currentTimeMillis(), DateUtils.HOUR_IN_MILLIS,
+                    DateUtils.FORMAT_ABBREV_ALL).toString()
+                    + " by "
+                    + mCursor.getString(ArticleLoader.Query.AUTHOR));
             holder.thumbnailView.setImageUrl(
-                    mCursor.getString(ArticleLoader.Query.THUMB_URL),
-                    ImageLoaderHelper.getInstance(ArticleListActivity.this).getImageLoader());
+                mCursor.getString(ArticleLoader.Query.THUMB_URL),
+                ImageLoaderHelper.getInstance(ArticleListActivity.this).getImageLoader());
             holder.thumbnailView.setAspectRatio(mCursor.getFloat(ArticleLoader.Query.ASPECT_RATIO));
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                 String transition = "transition" + position;
